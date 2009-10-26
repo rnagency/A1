@@ -122,10 +122,9 @@ class A1 {
 		{
 			// Create token
 			$token = text::random('alnum', 32);
-			
+
 			$user->{$this->_config['columns']['token']} = $token;
-			
-			//cookie::set('a1_'.$this->_name.'_autologin', $token . '.' . $user->primary_key_value, $this->_config['lifetime']);
+
 			cookie::set('a1_'.$this->_name.'_autologin', $token . '.' . $user->id, $this->_config['lifetime']);
 		}
 
