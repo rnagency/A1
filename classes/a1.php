@@ -92,7 +92,7 @@ class A1 {
 			{
 				$token = explode('.',$token);
 
-				if ( count($token) === 2 && is_string($token[0]) && is_numeric($token[1]))
+				if ( count($token) === 2 && is_string($token[0]) && !empty($token[1]))
 				{
 					// Search user on user ID (indexed) and token
 					$user = ORM::factory($this->_config['user_model'])
