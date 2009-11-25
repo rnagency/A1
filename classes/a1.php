@@ -80,9 +80,19 @@ class A1 {
 		$user = $this->_sess->get($this->_config['session_key']);
 
 		// User found in session, return
-		if ( is_object($user) && $user->loaded())
+		if ( is_object($user))
 		{
-			return $user;
+			if ( $user->loaded())
+			{
+				return $user;
+			}
+			else
+			{
+				// reloading failed - user is deleted but still exists in session
+				// logout (so session & cookie are cleared)
+				$this->logout();
+				return FALSE;
+			}
 		}
 
 		// Look for user in cookie
