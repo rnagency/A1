@@ -80,7 +80,7 @@ class A1 {
 		$user = $this->_sess->get($this->_config['session_key']);
 
 		// User found in session, return
-		if ( is_object($user))
+		if ( is_object($user) && $user->loaded())
 		{
 			return $user;
 		}
