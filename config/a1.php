@@ -35,8 +35,8 @@ return array(
 		'username'  => 'username',   //username
 		'password'  => 'password',   //password
 		'token'     => 'token',      //token
-		'last_login'=> 'last_login', //last login (optional)
-		'logins'    => 'logins'      //login count (optional)
+		//'last_login'=> 'last_login', //last login (optional)
+		//'logins'    => 'logins'      //login count (optional)
 	),
 
 	/**
