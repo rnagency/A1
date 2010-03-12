@@ -105,14 +105,14 @@ abstract class A1_Core {
 				if ( count($token) === 2 && is_string($token[0]) && !empty($token[1]))
 				{
 					// Search user on user ID (indexed) and token
-					/*$user = ORM::factory($this->_config['user_model'])
+					$user = ORM::factory($this->_config['user_model'])
 						->where($this->_config['columns']['token'],'=',$token[0])
-						->find($token[1]);*/
+						->find($token[1]);
 
-					$user = Mango::factory($this->_config['user_model'],array(
+					/*$user = Mango::factory($this->_config['user_model'],array(
 						'_id'   => $token[1],
 						'token' => $token[0]
-					))->load();
+					))->load();*/
 
 					// Found user, complete login and return
 					if ( $user->loaded())
@@ -136,7 +136,7 @@ abstract class A1_Core {
 
 			$user->{$this->_config['columns']['token']} = $token;
 
-			cookie::set('a1_'.$this->_name.'_autologin', $token . '.' . $user->_id, $this->_config['lifetime']);
+			cookie::set('a1_'.$this->_name.'_autologin', $token . '.' . $user->id, $this->_config['lifetime']);
 		}
 
 		if(isset($this->_config['columns']['last_login']))
@@ -149,8 +149,8 @@ abstract class A1_Core {
 			$user->{$this->_config['columns']['logins']}++;
 		}
 
-		//$user->save();
-		$user->update();
+		$user->save();
+		//$user->update();
 
 		// Regenerate session (prevents session fixation attacks)
 		$this->_sess->regenerate();
@@ -175,16 +175,16 @@ abstract class A1_Core {
 			return FALSE;
 		}
 
-		/*$user = is_object($username)
-			? $username
-			: ORM::factory($this->_config['user_model'], array( $this->_config['columns']['username'] => $username) );*/
-
 		$user = is_object($username)
+			? $username
+			: ORM::factory($this->_config['user_model'], array( $this->_config['columns']['username'] => $username) );
+
+		/*$user = is_object($username)
 			? $username
 			: Mango::factory($this->_config['user_model'],array(
 					$this->_config['columns']['username'] => $username,
 					'account_id'                          => Request::$account->_id
-				))->load();
+				))->load();*/
 
 		if ( $user->loaded())
 		{
