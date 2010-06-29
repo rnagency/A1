@@ -35,7 +35,11 @@ abstract class A1_Core {
 
 		if ( ! isset($_instances[$_name]))
 		{
-			$_instances[$_name] = new A1($_name);
+			$_config = Kohana::config($_name);
+			$_driver = isset($_config['driver']) ? $_config['driver'] : 'ORM';
+			$_class  = 'A1_' . ucfirst($_driver);
+
+			$_instances[$_name] = new $_class($_name, $_config);
 		}
 
 		return $_instances[$_name];
@@ -46,10 +50,10 @@ abstract class A1_Core {
 	 *
 	 * @return  void
 	 */
-	public function __construct($_name = 'a1')
+	protected function __construct($_name = 'a1', $_config)
 	{
 		$this->_name       = $_name;
-		$this->_config     = Kohana::config($_name);
+		$this->_config     = $_config;
 		$this->_sess       = Session::instance( $this->_config['session_type'] );
 
 		// Clean up the salt pattern and split it into an array
@@ -105,14 +109,7 @@ abstract class A1_Core {
 				if ( count($token) === 2 && is_string($token[0]) && !empty($token[1]))
 				{
 					// Search user on user ID (indexed) and token
-					$user = ORM::factory($this->_config['user_model'])
-						->where($this->_config['columns']['token'],'=',$token[0])
-						->find($token[1]);
-
-					/*$user = Mango::factory($this->_config['user_model'],array(
-						'_id'   => $token[1],
-						'token' => $token[0]
-					))->load();*/
+					$user = $this->_load_user_by_token($token);
 
 					// Found user, complete login and return
 					if ( $user->loaded())
@@ -136,21 +133,20 @@ abstract class A1_Core {
 
 			$user->{$this->_config['columns']['token']} = $token;
 
-			cookie::set('a1_'.$this->_name.'_autologin', $token . '.' . $user->id, $this->_config['lifetime']);
+			cookie::set('a1_'.$this->_name.'_autologin', $this->_create_user_token($user, $token), $this->_config['lifetime']);
 		}
 
-		if(isset($this->_config['columns']['last_login']))
+		if ( isset($this->_config['columns']['last_login']))
 		{
 			$user->{$this->_config['columns']['last_login']} = time();
 		}
 
-		if(isset($this->_config['columns']['logins']))
+		if ( isset($this->_config['columns']['logins']))
 		{
 			$user->{$this->_config['columns']['logins']}++;
 		}
 
-		$user->save();
-		//$user->update();
+		$this->_save_user($user);
 
 		// Regenerate session (prevents session fixation attacks)
 		$this->_sess->regenerate();
@@ -161,7 +157,7 @@ abstract class A1_Core {
 	}
 
 	/**
-	 * Attempt to log in a user by using an ORM object and plain-text password.
+	 * Attempt to log in a user.
 	 *
 	 * @param   string   username to log in
 	 * @param   string   password to check against
@@ -177,14 +173,7 @@ abstract class A1_Core {
 
 		$user = is_object($username)
 			? $username
-			: ORM::factory($this->_config['user_model'], array( $this->_config['columns']['username'] => $username) );
-
-		/*$user = is_object($username)
-			? $username
-			: Mango::factory($this->_config['user_model'],array(
-					$this->_config['columns']['username'] => $username,
-					'account_id'                          => Request::$account->_id
-				))->load();*/
+			: $this->_load_user($username);
 
 		if ( $user->loaded())
 		{
@@ -304,5 +293,44 @@ abstract class A1_Core {
 
 		return $salt;
 	}
+
+	/**
+	 * Compiles a user token based on a token and the id value of the user
+	 *
+	 * @param   object   User object
+	 * @param   string   Token
+	 * @return  string   Token String
+	 */
+	protected function _create_user_token($user, $token)
+	{
+		return $token . '.' . $user->id;
+	}
+
+	/**
+	 * Saves the user object
+	 *
+	 * @param   object   User object
+	 * @return  void
+	 */
+	protected function _save_user($user)
+	{
+		$user->save();
+	}
+
+	/**
+	 * Loads the user object from database using username
+	 *
+	 * @param   string   username
+	 * @return  object   User Object
+	 */
+	abstract protected function _load_user($username);
+
+	/**
+	 * Loads the user object from database using the token (restored from cookie)
+	 *
+	 * @param   array   token (token and ID)
+	 * @return  object  User Object
+	 */
+	abstract protected function _load_user_by_token(array $token);
 
 } // End A1

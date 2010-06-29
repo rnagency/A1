@@ -6,7 +6,7 @@
  * (see a2acldemo/classes/model/user.php for an example implementation)
  */
 
-abstract class Model_A1_ORM_User extends ORM {
+abstract class Model_A1_User_ORM extends ORM {
 
 	// A1 config file name
 	protected $_config = 'a1';
