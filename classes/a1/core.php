@@ -22,6 +22,8 @@ abstract class A1_Core {
 
 	protected $_name;
 	protected $_config;
+	protected $_cookie_key;
+
 	public $_sess;
 
 	/**
@@ -55,6 +57,12 @@ abstract class A1_Core {
 		$this->_name       = $_name;
 		$this->_config     = $_config;
 		$this->_sess       = Session::instance( $this->_config['session_type'] );
+
+		$cookie = isset($this->_config['cookie_key'])
+			? $this->_config['cookie_key']
+			: 'a1_{name}_autologin';
+
+		$this->_cookie_key = strtr($cookie, array('{name}' => $this->_name));
 
 		// Clean up the salt pattern and split it into an array
 		$this->_config['salt_pattern'] = preg_split('/,\s*/', $this->_config['salt_pattern']);
@@ -102,7 +110,7 @@ abstract class A1_Core {
 		// Look for user in cookie
 		if ( $this->_config['lifetime'])
 		{
-			if ( ($token = cookie::get('a1_'.$this->_name.'_autologin')))
+			if ( ($token = cookie::get($this->_cookie_key)))
 			{
 				$token = explode('.',$token);
 
@@ -133,7 +141,7 @@ abstract class A1_Core {
 
 			$user->{$this->_config['columns']['token']} = $token;
 
-			cookie::set('a1_'.$this->_name.'_autologin', $this->_create_user_token($user, $token), $this->_config['lifetime']);
+			cookie::set($this->_cookie_key, $this->_create_user_token($user, $token), $this->_config['lifetime']);
 		}
 
 		if ( isset($this->_config['columns']['last_login']))
@@ -196,9 +204,9 @@ abstract class A1_Core {
 	 */
 	public function logout($destroy = FALSE)
 	{
-		if ( cookie::get('a1_'.$this->_name.'_autologin'))
+		if ( cookie::get($this->_cookie_key))
 		{
-			cookie::delete('a1_'.$this->_name.'_autologin');
+			cookie::delete($this->_cookie_key);
 		}
 
 		if ($destroy === TRUE)
