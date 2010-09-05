@@ -47,5 +47,12 @@ return array(
 	/**
 	 * Session type - native or database
 	 */
-	'session_type' => 'native'
+	'session_type' => 'native',
+
+	/**
+	 * Cookie name to store autologin token
+	 *
+	 * '{name}' will be replaced by the A1 instance name
+	 */
+	'cookie_key' => 'a1_{name}_autologin'
 );
