@@ -17,12 +17,12 @@ abstract class Model_A1_User_ORM extends ORM {
 	// user columns (from config)
 	protected $_columns;
 
-	public function __construct($id = NULL)
+	protected function _initialize()
 	{
-		$this->_columns          = Kohana::config($this->_config)->columns;
-		$this->_user_model       = Kohana::config($this->_config)->user_model;
+		parent::_initialize();
 
-		parent::__construct($id);
+		$this->_columns        = Kohana::config($this->_config)->columns;
+		$this->_user_model     = Kohana::config($this->_config)->user_model;
 	}
 
 	public function save()
