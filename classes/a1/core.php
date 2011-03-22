@@ -3,28 +3,16 @@
  * User AUTHENTICATION library. Handles user login and logout, as well as secure
  * password hashing.
  *
- * Based on Kohana's AUTH library and Fred Wu's AuthLite library:
- *
- * @package     Auth
- * @author      Kohana Team
- * @copyright   (c) 2007 Kohana Team
- * @license     http://kohanaphp.com/license.html
- *
- * @package     Layerful
- * @subpackage  Modules
- * @author      Layerful Team <http://layerful.org/>
- * @author      Fred Wu <fred@beyondcoding.com>
- * @copyright   BeyondCoding
- * @license     http://layerful.org/license MIT
- * @since       0.3.0
+ * Uses BCrypt for hashing
  */
 abstract class A1_Core {
 
+	// Allowed salt characters
+	const SALT = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
 	protected $_name;
 	protected $_config;
-	protected $_cookie_key;
-
-	public $_sess;
+	protected $_sess;
 
 	/**
 	 * Return a static instance of A1.
@@ -56,19 +44,22 @@ abstract class A1_Core {
 	{
 		$this->_name       = $_name;
 		$this->_config     = $_config;
-		$this->_sess       = Session::instance( $this->_config['session_type'] );
+		$this->_sess       = Session::instance( $this->_config['session']['type']);
 
-		$cookie = isset($this->_config['cookie_key'])
-			? $this->_config['cookie_key']
-			: 'a1_{name}_autologin';
+		if ( isset($this->_config['cookie']))
+		{
+			if ( ! isset($this->_config['cookie']['key']))
+			{
+				$this->_config['cookie']['key'] = 'a1_{name}_autologin';
+			}
 
-		$this->_cookie_key = strtr($cookie, array('{name}' => $this->_name));
+			$this->_config['cookie']['key'] = strtr($this->_config['cookie']['key'], array('{name}' => $this->_name));
+		}
 
-		// Clean up the salt pattern and split it into an array
-		$this->_config['salt_pattern'] = preg_split('/,\s*/', $this->_config['salt_pattern']);
-
-		// Generate session key
-		$this->_config['session_key'] = 'a1_' . $this->_name;
+		if ( isset($this->_config['session']['key']))
+		{
+			$this->_config['session'] = 'a1_' . $this->_name;
+		}
 	}
 
 	/**
@@ -107,20 +98,19 @@ abstract class A1_Core {
 			}
 		}
 
-		// Look for user in cookie
-		if ( $this->_config['lifetime'])
+		if ( $this->_config['cookie']['lifetime'])
 		{
-			if ( ($token = cookie::get($this->_cookie_key)))
+			if ( ($token = Cookie::get($this->_config['cookie']['key'])))
 			{
-				$token = explode('.',$token);
+				list($hash, $username) = explode('.', $token, 2);
 
-				if ( count($token) === 2 && is_string($token[0]) && !empty($token[1]))
+				if ( strlen($hash) === 32 && $username !== NULL)
 				{
-					// Search user on user ID (indexed) and token
-					$user = $this->_load_user_by_token($token);
+					// load user using username
+					$user = $this->_load_user($username);
 
-					// Found user, complete login and return
-					if ( $user->loaded())
+					// validates token vs hash
+					if ( $user->loaded() && $this->check($hash, $user->{$this->_config['columns']['token']}))
 					{
 						return $this->complete_login($user,TRUE);
 					}
@@ -128,20 +118,18 @@ abstract class A1_Core {
 			}
 		}
 
-		// No user found, return false
 		return FALSE;
 	}
 
 	protected function complete_login($user, $remember = FALSE)
 	{
-		if ( $remember === TRUE && $this->_config['lifetime'])
+		if ( $remember === TRUE && $this->_config['cookie']['lifetime'])
 		{
-			// Create token
 			$token = text::random('alnum', 32);
 
-			$user->{$this->_config['columns']['token']} = $token;
+			$user->{$this->_config['columns']['token']} = $this->hash($token);
 
-			cookie::set($this->_cookie_key, $this->_create_user_token($user, $token), $this->_config['lifetime']);
+			Cookie::set($this->_config['cookie']['key'], $token . '.' . $user->{$this->_config['columns']['username']}, $this->_config['lifetime']);
 		}
 
 		if ( isset($this->_config['columns']['last_login']))
@@ -159,7 +147,7 @@ abstract class A1_Core {
 		// Regenerate session (prevents session fixation attacks)
 		$this->_sess->regenerate();
 
-		$this->_sess->set($this->_config['session_key'], $user);
+		$this->_sess->set($this->_config['session']['key'], $user);
 
 		return $user;
 	}
@@ -183,17 +171,9 @@ abstract class A1_Core {
 			? $username
 			: $this->_load_user($username);
 
-		if ( $user->loaded())
-		{
-			$salt = $this->find_salt($user->{$this->_config['columns']['password']});
-	
-			if ( $this->hash_password($password, $salt) === $user->{$this->_config['columns']['password']})
-			{
-				return $this->complete_login($user,$remember);
-			}
-		}
-
-		return FALSE;
+		return $user->loaded() && $this->check($password, $user->{$this->_config['columns']['password']})
+			? $this->complete_login($user, $remember)
+			: FALSE;
 	}
 
 	/**
@@ -204,114 +184,55 @@ abstract class A1_Core {
 	 */
 	public function logout($destroy = FALSE)
 	{
-		if ( cookie::get($this->_cookie_key))
+		if ( Cookie::get($this->_config['cookie']['key']))
 		{
-			cookie::delete($this->_cookie_key);
+			Cookie::delete($this->_config['cookie']['key']);
 		}
 
 		if ($destroy === TRUE)
 		{
-			// Destroy the session completely
 			$this->_sess->destroy();
 		}
 		else
 		{
-			// Remove the user from the session
-			$this->_sess->delete($this->_config['session_key']);
-
-			// Regenerate session_id
+			$this->_sess->delete($this->_config['session']['key']);
 			$this->_sess->regenerate();
 		}
 
 		return ! $this->logged_in();
 	}
 
-	/**
-	 * Creates a hashed password from a plaintext password, inserting salt
-	 * based on the configured salt pattern.
-	 *
-	 * @param   string  plaintext password
-	 * @return  string  hashed password string
-	 */
-	public function hash_password($password, $salt = FALSE)
+	public function hash($input, $salt = NULL, $cost = NULL)
 	{
-		if ( $salt === FALSE)
+		if ( ! $salt)
 		{
-			// Create a salt seed, same length as the number of offsets in the pattern
-			$salt = substr($this->hash(uniqid(NULL, TRUE)), 0, count($this->_config['salt_pattern']));
+			// Generate a random 22 character salt
+			$salt = Text::random(self::SALT, 22);
 		}
 
-		// Password hash that the salt will be inserted into
-		$hash = $this->hash($salt.$password);
-
-		// Change salt to an array
-		$salt = str_split($salt, 1);
-
-		// Returned password
-		$password = '';
-
-		// Used to calculate the length of splits
-		$last_offset = 0;
-
-		foreach ( $this->_config['salt_pattern'] as $offset)
+		if ( ! $cost)
 		{
-			// Split a new part of the hash off
-			$part = substr($hash, 0, $offset - $last_offset);
-
-			// Cut the current part out of the hash
-			$hash = substr($hash, $offset - $last_offset);
-
-			// Add the part to the password, appending the salt character
-			$password .= $part.array_shift($salt);
-
-			// Set the last offset to the current offset
-			$last_offset = $offset;
+			$cost = $this->_config['cost'];
 		}
 
-		// Return the password, with the remaining hash appended
-		return $password.$hash;
+		// Apply 0 padding to the cost, normalize to a range of 4-31
+		$cost = sprintf('%02d', min(31, max($cost, 4)));
+
+		// Create a salt suitable for bcrypt
+		$salt = '$2a$'.$cost.'$'.$salt.'$';
+
+		return crypt($input, $salt);
 	}
 
-	/**
-	 * Perform a hash, using the configured method.
-	 *
-	 * @param   string  string to hash
-	 * @return  string
-	 */
-	public function hash($str)
+	public function check($password, $hash)
 	{
-		return hash($this->_config['hash_method'], $str);
-	}
+		// $2a$ (4) 00 (2) $ (1) <salt> (22)
+		preg_match('/^\$2a\$(\d{2})\$(.{22})/D', $hash, $matches);
 
-	/**
-	 * Finds the salt from a password, based on the configured salt pattern.
-	 *
-	 * @param   string  hashed password
-	 * @return  string
-	 */
-	public function find_salt($password)
-	{
-		$salt = '';
+		// Extract the iterations and salt from the hash
+		list($_, $cost, $salt) = $matches;
 
-		foreach ( $this->_config['salt_pattern'] as $i => $offset)
-		{
-			// Find salt characters, take a good long look...
-			$salt .= substr($password, $offset + $i, 1);
-		}
-
-		return $salt;
-	}
-
-	/**
-	 * Compiles a user token based on a token and the id value of the user
-	 *
-	 * @param   object   User object
-	 * @param   string   Token
-	 * @return  string   Token String
-	 */
-	protected function _create_user_token($user, $token)
-	{
-		return $token . '.' . $user->id;
+		return $this->hash($password, $salt, $cost) === $hash;
 	}
 
 	/**
@@ -332,13 +253,4 @@ abstract class A1_Core {
 	 * @return  object   User Object
 	 */
 	abstract protected function _load_user($username);
-
-	/**
-	 * Loads the user object from database using the token (restored from cookie)
-	 *
-	 * @param   array   token (token and ID)
-	 * @return  object  User Object
-	 */
-	abstract protected function _load_user_by_token(array $token);
-
 } // End A1
