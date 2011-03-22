@@ -37,6 +37,6 @@ abstract class Model_A1_User_Mango extends Mango {
 
 	public function hash($password)
 	{
-		return A1::instance($this->_name)->hash_password($password);
+		return A1::instance($this->_name)->hash($password);
 	}
 }

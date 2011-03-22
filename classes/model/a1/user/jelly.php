@@ -104,6 +104,6 @@ abstract class Model_A1_User_Jelly extends Jelly_Model {
 	 */
 	public static function hash_password($password)
 	{
-		return A1::instance()->hash_password($password);
+		return A1::instance()->hash($password);
 	}
 }

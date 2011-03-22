@@ -64,7 +64,7 @@ abstract class Model_A1_User_Sprig extends Sprig {
 	public function hash_password(Validate $array, $field)
 	{
 		$pass = $array[$field];
-		$array[$field] = A1::instance($this->_name)->hash_password($pass);
+		$array[$field] = A1::instance($this->_name)->hash($pass);
 	}
 
 }	// End of Model_A1_User_Sprig
