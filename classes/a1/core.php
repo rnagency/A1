@@ -144,7 +144,7 @@ abstract class A1_Core {
 
 			$user->{$this->_config['columns']['token']} = $this->hash($token);
 
-			Cookie::set($this->_config['cookie']['key'], $token . '.' . $user->{$this->_config['columns']['username']}, $this->_config['lifetime']);
+			Cookie::set($this->_config['cookie']['key'], $token . '.' . $user->{$this->_config['columns']['username']}, $this->_config['cookie']['lifetime']);
 		}
 
 		if ( isset($this->_config['columns']['last_login']))
