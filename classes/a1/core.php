@@ -56,10 +56,11 @@ abstract class A1_Core {
 			$this->_config['cookie']['key'] = strtr($this->_config['cookie']['key'], array('{name}' => $this->_name));
 		}
 
-		if ( isset($this->_config['session']['key']))
+		if ( ! isset($this->_config['session']['key']))
 		{
-			$this->_config['session'] = 'a1_' . $this->_name;
+			$this->_config['session']['key'] = 'a1_' . $this->_name;
 		}
+
 	}
 
 	/**
@@ -80,7 +81,7 @@ abstract class A1_Core {
 	public function get_user()
 	{
 		// Get the user from the session
-		$user = $this->_sess->get($this->_config['session_key']);
+		$user = $this->_sess->get($this->_config['session']['key']);
 
 		// User found in session, return
 		if ( is_object($user))

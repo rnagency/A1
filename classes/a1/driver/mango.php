@@ -16,14 +16,13 @@ abstract class A1_Driver_Mango extends A1 {
 	}
 
 	/**
-	 * Compiles a user token based on a token and the id value of the user
+	 * Saves the user object
 	 *
 	 * @param   object   User object
-	 * @param   string   Token
-	 * @return  string   Token String
+	 * @return  void
 	 */
-	protected function _create_user_token($user, $token)
+	protected function _save_user($user)
 	{
-		return $token . '.' . $user->_id;
+		$user->update();
 	}
 }
