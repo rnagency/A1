@@ -1,9 +1,17 @@
 <?php
 /**
- * User AUTHENTICATION library. Handles user login and logout, as well as secure
- * password hashing.
+ * User AUTHENTICATION module for Kohana PHP Framework using bcrypt
  *
- * Uses BCrypt for hashing
+ * bcrypt is highly recommended by many to safely store passwords. For more
+ * information, see http://codahale.com/how-to-safely-store-a-password/
+ *
+ * Based on Kohana's AUTH, Fred Wu's AUTHLITE and Woody Gilk's Bonafide
+ *
+ * @copyright  (c) 2011 Wouter
+ * @copyright  (c) 2011 Woody Gilk
+ * @copyright  (c) 2011 Fred Wu
+ * @copyright  (c) 2011 Kohana Team
+ * @license    MIT
  */
 abstract class A1_Core {
 
@@ -60,7 +68,6 @@ abstract class A1_Core {
 		{
 			$this->_config['session']['key'] = 'a1_' . $this->_name;
 		}
-
 	}
 
 	/**
@@ -122,6 +129,13 @@ abstract class A1_Core {
 		return FALSE;
 	}
 
+	/**
+	 * Updates session, set remember cookie (if required
+	 *
+	 * @param   Object   User object
+	 * @param   boolean  Set 'remember me' cookie
+	 * @return  TRUE
+	 */
 	protected function complete_login($user, $remember = FALSE)
 	{
 		if ( $remember === TRUE && $this->_config['cookie']['lifetime'])
@@ -203,6 +217,14 @@ abstract class A1_Core {
 		return ! $this->logged_in();
 	}
 
+	/**
+	 * Generates bcrypt hash for input
+	 *
+	 * @param   string   value to hash
+	 * @param   string   salt (optional, will be generated if missing)
+	 * @param   int      cost (optional, will be read from config if missing)
+	 * @return  string   hashed input value
+	 */
 	public function hash($input, $salt = NULL, $cost = NULL)
 	{
 		if ( ! $salt)
@@ -225,6 +247,13 @@ abstract class A1_Core {
 		return crypt($input, $salt);
 	}
 
+	/**
+	 * Checks if password matches hash
+	 *
+	 * @param   string   password
+	 * @param   string   hashed password
+	 * @return  boolean  password matches hashed password
+	 */
 	public function check($password, $hash)
 	{
 		// $2a$ (4) 00 (2) $ (1) <salt> (22)
