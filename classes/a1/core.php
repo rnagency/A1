@@ -40,6 +40,11 @@ abstract class A1_Core {
 			$_instances[$_name] = new $_class($_name, $_config);
 		}
 
+		if ( CRYPT_BLOWFISH !== 1)
+		{
+			throw new Kohana_Exception('This server does not support bcrypt hashing');
+		}
+
 		return $_instances[$_name];
 	}
 
