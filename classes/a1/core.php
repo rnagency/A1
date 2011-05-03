@@ -22,6 +22,8 @@ abstract class A1_Core {
 	protected $_config;
 	protected $_sess;
 
+	protected $_user;
+
 	/**
 	 * Return a static instance of A1.
 	 *
@@ -91,6 +93,31 @@ abstract class A1_Core {
 	 * @return  object / FALSE
 	 */
 	public function get_user()
+	{
+		if ( ! isset($this->_user))
+		{
+			$this->_user = $this->find_user();
+		}
+
+		return $this->_user;
+	}
+
+	/**
+	 * Sets the user that is logged in
+	 *
+	 * @return  object / FALSE
+	 */
+	public function set_user($user)
+	{
+		$this->_user = $user;
+	}
+
+	/**
+	 * Finds the user in the session (if any)
+	 *
+	 * @return  object / FALSE
+	 */
+	protected function find_user()
 	{
 		// Get the user from the session
 		$user = $this->_sess->get($this->_config['session']['key']);
