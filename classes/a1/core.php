@@ -56,7 +56,6 @@ abstract class A1_Core {
 	{
 		$this->_name       = $_name;
 		$this->_config     = $_config;
-		$this->_sess       = Session::instance( $this->_config['session_type'] );
 
 		$cookie = isset($this->_config['cookie_key'])
 			? $this->_config['cookie_key']
@@ -69,6 +68,21 @@ abstract class A1_Core {
 
 		// Generate session key
 		$this->_config['session_key'] = 'a1_' . $this->_name;
+	}
+
+	/**
+	 * (Initializes &) Returns the session we're working with
+	 *
+	 * @return   Session
+	 */
+	public function session()
+	{
+		if ( ! isset($this->_sess))
+		{
+			$this->_sess = Session::instance( $this->_config['session']['type']);
+		}
+
+		return $this->_sess;
 	}
 
 	/**
@@ -89,7 +103,7 @@ abstract class A1_Core {
 	public function get_user()
 	{
 		// Get the user from the session
-		$user = $this->_sess->get($this->_config['session_key']);
+		$user = $this->session()->get($this->_config['session_key']);
 
 		// User found in session, return
 		if ( is_object($user))
@@ -157,9 +171,9 @@ abstract class A1_Core {
 		$this->_save_user($user);
 
 		// Regenerate session (prevents session fixation attacks)
-		$this->_sess->regenerate();
+		$this->session()->regenerate();
 
-		$this->_sess->set($this->_config['session_key'], $user);
+		$this->session()->set($this->_config['session_key'], $user);
 
 		return $user;
 	}
@@ -212,15 +226,15 @@ abstract class A1_Core {
 		if ($destroy === TRUE)
 		{
 			// Destroy the session completely
-			$this->_sess->destroy();
+			$this->session()->destroy();
 		}
 		else
 		{
 			// Remove the user from the session
-			$this->_sess->delete($this->_config['session_key']);
+			$this->session()->delete($this->_config['session_key']);
 
 			// Regenerate session_id
-			$this->_sess->regenerate();
+			$this->session()->regenerate();
 		}
 
 		return ! $this->logged_in();
