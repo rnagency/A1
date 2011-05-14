@@ -79,13 +79,14 @@ abstract class A1_Core {
 	/**
 	 * (Initializes &) Returns the session we're working with
 	 *
+	 * @param    Force session id
 	 * @return   Session
 	 */
-	public function session()
+	public function session($id = NULL)
 	{
 		if ( ! isset($this->_sess))
 		{
-			$this->_sess = Session::instance( $this->_config['session']['type']);
+			$this->_sess = Session::instance( $this->_config['session']['type'], $id);
 		}
 
 		return $this->_sess;
