@@ -233,9 +233,27 @@ abstract class A1_Core {
 			? $username
 			: $this->_load_user($username);
 
-		return $user->loaded() && $this->check($password, $user->{$this->_config['columns']['password']})
+		return $this->check_password($user, $password)
 			? $this->complete_login($user, $remember)
 			: FALSE;
+	}
+
+	/**
+	 * Validates a password against a user. This can be used to confirm user in actions where
+	 * you ask for password while user is logged in to be extra safe (eg when deleting account)
+	 *
+	 *    if ( $a1->check_password($user, $this->request->post('password')))
+	 *    {
+	 *        // delete account or some other special action
+	 *    }
+	 *
+	 * @param   Model    User model
+	 * @param   String   Password
+	 * @return  boolean  Success
+	 */
+	public function check_password($user, $password)
+	{
+		return $user->loaded() && $this->check($password, $user->{$this->_config['columns']['password']});
 	}
 
 	/**
