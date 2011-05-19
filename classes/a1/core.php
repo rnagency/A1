@@ -177,7 +177,7 @@ abstract class A1_Core {
 	}
 
 	/**
-	 * Updates session, set remember cookie (if required
+	 * Updates session, set remember cookie (if required)
 	 *
 	 * @param   Object   User object
 	 * @param   boolean  Set 'remember me' cookie
@@ -211,7 +211,7 @@ abstract class A1_Core {
 
 		$this->session()->set($this->_config['session']['key'], $user);
 
-		return $user;
+		return $this->_user = $user;
 	}
 
 	/**
