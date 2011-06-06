@@ -183,7 +183,7 @@ abstract class A1_Core {
 	 * @param   boolean  Set 'remember me' cookie
 	 * @return  TRUE
 	 */
-	protected function complete_login($user, $remember = FALSE)
+	public function complete_login($user, $remember = FALSE)
 	{
 		if ( $remember === TRUE && $this->_config['cookie']['lifetime'])
 		{
