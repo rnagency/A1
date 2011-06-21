@@ -264,12 +264,14 @@ abstract class A1_Core {
 	 */
 	public function logout($destroy = FALSE)
 	{
+		unset($this->_user);
+
 		if ( Cookie::get($this->_config['cookie']['key']))
 		{
 			Cookie::delete($this->_config['cookie']['key']);
 		}
 
-		if ($destroy === TRUE)
+		if ( $destroy === TRUE)
 		{
 			$this->session()->destroy();
 		}
