@@ -327,7 +327,8 @@ abstract class A1_Core {
 		preg_match('/^\$2a\$(\d{2})\$(.{22})/D', $hash, $matches);
 
 		// Extract the iterations and salt from the hash
-		list($_, $cost, $salt) = $matches;
+		$cost = Arr::get($matches, 1);
+		$salt = Arr::get($matches, 2);
 
 		return $this->hash($password, $salt, $cost) === $hash;
 	}
