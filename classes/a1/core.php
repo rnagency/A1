@@ -99,7 +99,10 @@ abstract class A1_Core {
 	 */
 	public function logged_in()
 	{
-		Request::$initial->response()->headers("Cache-Control","no-store, no-cache, must-revalidate");
+		if($this->_config['cache']===FALSE)
+		{
+			Request::$initial->response()->headers("Cache-Control","no-store, no-cache, must-revalidate");
+		}
 		return is_object($this->get_user());
 	}
 
