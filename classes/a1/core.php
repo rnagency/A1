@@ -46,7 +46,11 @@ abstract class A1_Core {
 		{
 			throw new Kohana_Exception('This server does not support bcrypt hashing');
 		}
-
+		
+		if($_config['cache']===FALSE)
+		{
+			Request::$initial->response()->headers("Cache-Control","no-store, no-cache, must-revalidate");
+		}
 		return $_instances[$_name];
 	}
 
@@ -99,10 +103,6 @@ abstract class A1_Core {
 	 */
 	public function logged_in()
 	{
-		if($this->_config['cache']===FALSE)
-		{
-			Request::$initial->response()->headers("Cache-Control","no-store, no-cache, must-revalidate");
-		}
 		return is_object($this->get_user());
 	}
 
