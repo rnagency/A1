@@ -25,4 +25,15 @@ abstract class A1_Driver_Mango extends A1 {
 	{
 		$user->update();
 	}
+
+	/**
+	 * Increment the number of logins of the user by 1
+	 *
+	 * @param   object   User object
+	 * @return  void
+	 */
+	protected function _increment_logins($user)
+	{
+		$user->__get($this->_config['columns']['logins'])->increment(1);
+	}
 }
