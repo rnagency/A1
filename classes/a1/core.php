@@ -203,12 +203,12 @@ abstract class A1_Core {
 
 		if ( isset($this->_config['columns']['last_login']))
 		{
-			$user->{$this->_config['columns']['last_login']} = time();
+			$this->_set_last_login($user);
 		}
 
 		if ( isset($this->_config['columns']['logins']))
 		{
-			$user->{$this->_config['columns']['logins']}++;
+			$this->_increment_logins($user);
 		}
 
 		$this->_save_user($user);
@@ -349,6 +349,28 @@ abstract class A1_Core {
 	protected function _save_user($user)
 	{
 		$user->save();
+	}
+
+	/**
+	 * Sets the last login field of the user object to current time
+	 *
+	 * @param   object   User object
+	 * @return  void
+	 */
+	protected function _set_last_login($user)
+	{
+		$user->{$this->_config['columns']['last_login']} = time();
+	}
+
+	/**
+	 * Increment the number of logins of the user by 1
+	 *
+	 * @param   object   User object
+	 * @return  void
+	 */
+	protected function _increment_logins($user)
+	{
+		$user->{$this->_config['columns']['logins']}++;
 	}
 
 	/**
