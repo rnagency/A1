@@ -216,9 +216,21 @@ abstract class A1_Core {
 		// Regenerate session (prevents session fixation attacks)
 		$this->session()->regenerate();
 
-		$this->session()->set($this->_config['session']['key'], $user);
+		// Store user in session
+		$this->store_user_in_session($user);
 
 		return $this->_user = $user;
+	}
+
+	/**
+	 * Stores user model in session
+	 *
+	 * @param   user object
+	 * @return  void
+	 */
+	public function store_user_in_session($user)
+	{
+		$this->session()->set($this->_config['session']['key'], $user);
 	}
 
 	/**
