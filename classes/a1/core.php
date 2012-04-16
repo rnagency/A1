@@ -184,6 +184,29 @@ abstract class A1_Core {
 	}
 
 	/**
+	 * Registers a failed login attempt
+	 *
+	 * @param   Object   User object
+	 * @return  FALSE
+	 */
+	public function failed_login($user)
+	{
+		if ( isset($this->_config['columns']['failed_attempts']))
+		{
+			$this->_increment_failed_attempts($user);
+		}
+
+		if ( isset($this->_config['columns']['last_attempt']))
+		{
+			$this->_set_last_attempt($user);
+		}
+
+		$this->_save_user($user);
+
+		return FALSE;
+	}
+
+	/**
 	 * Updates session, set remember cookie (if required)
 	 *
 	 * @param   Object   User object
@@ -199,6 +222,11 @@ abstract class A1_Core {
 			$user->{$this->_config['columns']['token']} = $this->hash($token);
 
 			Cookie::set($this->_config['cookie']['key'], $token . '.' . $user->{$this->_config['columns']['username']}, $this->_config['cookie']['lifetime']);
+		}
+
+		if ( isset($this->_config['columns']['failed_attempts']))
+		{
+			$this->_reset_failed_attempts($user);
 		}
 
 		if ( isset($this->_config['columns']['last_login']))
@@ -252,9 +280,39 @@ abstract class A1_Core {
 			? $username
 			: $this->_load_user($username);
 
+		if ( isset($this->_config['columns']['failed_attempts']) && isset($this->_config['columns']['last_attempt']) && count(Arr::get($this->_config, 'rate_limits', array())))
+		{
+			// rate limiting active
+			$attempt = 1 + (int) $this->_get_failed_attempts($user);
+			$last    = isset($user->{$this->_config['columns']['last_attempt']})
+				? $user->{$this->_config['columns']['last_attempt']}
+				: NULL;
+
+			if ( $attempt > 1 && ! empty($last))
+			{
+				ksort($this->_config['rate_limits']);
+
+				foreach ( array_reverse($this->_config['rate_limits'], TRUE) as $attempts => $time)
+				{
+					if ( $attempt > $attempts)
+					{
+						if ( $last + $time > time())
+						{
+							// user has to wait some more before being allowed to login again
+							throw new A1_Rate_Exception('Login not allowed. Rate limit active', $last + $time);
+						}
+						else
+						{
+							break;
+						}
+					}
+				}
+			}
+		}
+
 		return $this->check_password($user, $password)
 			? $this->complete_login($user, $remember)
-			: FALSE;
+			: $this->failed_login($user);
 	}
 
 	/**
@@ -375,6 +433,17 @@ abstract class A1_Core {
 	}
 
 	/**
+	 * Sets the last attempt field of the user object to current time
+	 *
+	 * @param   object   User object
+	 * @return  void
+	 */
+	protected function _set_last_attempt($user)
+	{
+		$user->{$this->_config['columns']['last_attempt']} = time();
+	}
+
+	/**
 	 * Increment the number of logins of the user by 1
 	 *
 	 * @param   object   User object
@@ -383,6 +452,39 @@ abstract class A1_Core {
 	protected function _increment_logins($user)
 	{
 		$user->{$this->_config['columns']['logins']}++;
+	}
+
+	/**
+	 * Increment the number of failed login attempts since last successfull login
+	 *
+	 * @param   object   User object
+	 * @return  void
+	 */
+	protected function _increment_failed_attempts($user)
+	{
+		$user->{$this->_config['columns']['failed_attempts']}++;
+	}
+
+	/**
+	 * Reset the number of failed login attempts
+	 *
+	 * @param   object   User object
+	 * @return  void
+	 */
+	protected function _reset_failed_attempts($user)
+	{
+		unset($user->{$this->_config['columns']['failed_attempts']});
+	}
+
+	/**
+	 * Returns the number of failed login attempts
+	 *
+	 * @param   object   User object
+	 * @return  void
+	 */
+	protected function _get_failed_attempts($user)
+	{
+		return $user->{$this->_config['columns']['failed_attempts']};
 	}
 
 	/**

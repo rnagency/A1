@@ -15,8 +15,10 @@ abstract class Model_A1_User_Mango extends Mango {
 		'username'   => array( 'type' => 'string', 'required' => TRUE, 'min_length' => 4, 'max_length' => 50, 'unique' => TRUE),
 		'password'   => array( 'type' => 'string', 'required' => TRUE, 'min_length' => 5, 'max_length' => 50),
 
-		//'logins'     => array('type' => 'counter')
-		//'last_login' => array('type' => 'int')
+		//'logins'          => array('type' => 'counter')
+		//'last_login'      => array('type' => 'int'),
+		//'last_attempt'    => array('type' => 'int'),
+		//'failed_attempts' => array('type' => 'counter')
 	);
 
 	// Specify config name so password gets hashed correctly (with the right salt pattern) when set in user

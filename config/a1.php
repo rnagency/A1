@@ -15,8 +15,24 @@ return array(
 		'username'    => 'username',
 		'password'    => 'password',
 		'token'       => 'token',
-		//'last_login'=> 'last_login', // (optional)
-		//'logins'    => 'logins'      // (optional)
+		//'last_login'      => 'last_login',      // (optional)
+		//'logins'          => 'logins',          // (optional),
+		//'last_attempt'    => 'last_attempt',    // (optional),
+		//'failed_attempts' => 'failed_attempts', // (optional)
+	),
+
+	/**
+	 * [!!] Enable the last_attempt & failed_attempt columns to enable rate limiting
+	 *
+	 * Brute force password attacks take much more time if you disable login for a 
+	 * certain amount of time after a certain number of failed logins
+	 *
+	 * after $key attempts, wait $value seconds between each next attempt
+	 */
+	'rate_limits' => array(
+		3  => 30,  // after 3 failed attempts, wait 30 seconds between each next attempt
+		5  => 60,  // after 5 failed attempts, wait 1 minute between each next attempt
+		10 => 300  // after 5 failed attempts, wait 10 minutes between each next attempt
 	),
 
 	'session'  => array(
