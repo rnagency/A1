@@ -280,6 +280,11 @@ abstract class A1_Core {
 			? $username
 			: $this->_load_user($username);
 
+		if ( ! $user->loaded())
+		{
+			return FALSE;
+		}
+
 		if ( isset($this->_config['columns']['failed_attempts']) && isset($this->_config['columns']['last_attempt']) && count(Arr::get($this->_config, 'rate_limits', array())))
 		{
 			// rate limiting active
