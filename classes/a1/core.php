@@ -1,4 +1,4 @@
-<?php
+<?php defined('SYSPATH') or die('No direct access allowed.');
 /**
  * User AUTHENTICATION module for Kohana PHP Framework using bcrypt
  *
