@@ -155,7 +155,7 @@ abstract class A1_Core {
 			{
 				// reloading failed - user is deleted but still exists in session
 				// logout (so session & cookie are cleared)
-				$this->logout();
+				$this->logout(TRUE);
 				return FALSE;
 			}
 		}
