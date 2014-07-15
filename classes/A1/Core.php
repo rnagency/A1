@@ -117,8 +117,8 @@ abstract class A1_Core {
 		if (is_object($this->_user) AND $this->_config['prevent_browser_cache'] === TRUE)
 		{
 			// prevent browser caching of all responses when a user is logged in
-			Request::$initial->response()->headers('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
-			Request::$initial->response()->headers('Pragma', 'no-cache');
+			Request::$initial->headers('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
+			Request::$initial->headers('Pragma', 'no-cache');
 		}
 
 		return $this->_user;
